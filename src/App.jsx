@@ -3,53 +3,25 @@ import CharacterDetail from "./components/CharacterDetail";
 import CharacterList from "./components/CharacterList";
 import Navbar, { Favorites, Search, SearchResult } from "./components/Navbar";
 import { useEffect, useState } from "react";
-import { Toaster, toast } from "react-hot-toast";
-import axios from "axios";
+import { Toaster } from "react-hot-toast";
+import useCharacters from "./hooks/useCharacter";
+import useLocalStorage from "./hooks/useLocalStorage";
 
 function App() {
-  const [characters, setCharacters] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(null);
-  const [favourites, setFavourites] = useState(
-    () => JSON.parse(localStorage.getItem("FAVOURITES")) || []
+  const { isLoading, characters } = useCharacters(
+    "https://rickandmortyapi.com/api/character/?name",
+    query
   );
+  const [selectedId, setSelectedId] = useState(null);
+  const [favourites, setFavourites] = useLocalStorage("FAVOURITES", []);
+  // const [favourites, setFavourites] = useState(
+  //   () => JSON.parse(localStorage.getItem("FAVOURITES")) || []
+  // );
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        const { data } = await axios.get(
-          `https://rickandmortyapi.com/api/character/?name=${query}`,
-          { signal }
-        );
-        setCharacters(data.results.slice(0, 5));
-      } catch (err) {
-        if (!axios.isCancel()) {
-          setCharacters([]);
-          toast.error(err.response.data.error);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    // if (query.length < 3) {
-    //   setCharacters([]);
-    //   return;
-    // }
-
-    fetchData();
-
-    return () => {
-      controller.abort();
-    };
-  }, [query]);
-  useEffect(() => {
-    localStorage.setItem("FAVOURITES", JSON.stringify(favourites));
-  }, [favourites]);
+  // useEffect(() => {
+  //   localStorage.setItem("FAVOURITES", JSON.stringify(favourites));
+  // }, [favourites]);
 
   const handleSelectCharacter = (id) => {
     setSelectedId((prevId) => (prevId === id ? null : id));
